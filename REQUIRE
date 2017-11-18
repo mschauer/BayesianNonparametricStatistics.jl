@@ -1,0 +1,4 @@
+julia 0.6
+Distributions 0.14.2
+PDMats 0.7.0
+PyPlot 2.3.2

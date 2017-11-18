@@ -1,0 +1,85 @@
+\documentclass[12pt]{article}
+\usepackage{jansstylefile} % The option nobibliography does not print the bibliography. But bibliography can still be used. 
+
+\begin{document}
+
+\section{Distribution of the posterior of a finite basis expansion with Gaussian coefficients}
+
+\begin{lemma}
+	Let \(X^T=\set{X_t:t\in[0,T]}\) be an observation of 
+	\begin{align*}
+		dX_t=b(X_t)dt+\sigma(X_t)dW_t,
+	\end{align*}
+	where \(b\) is equipped with the prior distribution defined by 
+	\[
+	b=\sum_{j=1}^k\theta_j\phi_j,
+	\]
+	where \(\set{\phi_1,\ldots,\phi_k}\) is a linearly independent basis, and \(\theta=(\theta_1,\ldots,\theta_k)^t\) has multivariate normal distribution \(N(\mu,\Sigma)\) and \(\sigma\) is a positive measurable function. Then the  posterior distribution of \(\theta\) is \(N((S+\Sigma^{-1})^{-1}(m+\mu), (S+\Sigma^{-1})^{-1})\), where the vector \(m=(m_1,\ldots,m_k)^t\) is defined by 
+	\[
+	m_l=\int_0^T\frac{\phi_l(X_t)}{\sigma(X_t)^2}dX_t, \quad l=1,\ldots,k,
+	\] 
+	and the symmetric \(k\times k\)-matrix \(S\) is given by 
+	\[
+	S_{l,l'}=\int_0^T\frac{\phi_l(X_t)\phi_{l'}(X_t)}{\sigma^2(X_t)}dt,\quad l,l'=1,\ldots,k,
+	\]
+	provided \(S+\Sigma^{-1}\) is invertible. 
+\end{lemma}
+\begin{proof}Almost surely we have by Girsanov's theorem\begin{equation}\label{eq:girsanov}
+p(X^T\mid \theta)=\exp\left(\int_0^T\frac{b(X_t)}{\sigma(X_t)^2}dX_t-\frac12\int_0^T\rh{\frac{b(X_t)}{\sigma(X_t)}}^2dt\right),
+\end{equation}with respect to the Wiener measure. So \(\log p(X^T\mid b)=\theta^tm - \frac 1 2 \theta^t S\theta\). And the log of the distribution of \(\theta\) with respect to the Lebesgue measure on \(\re^k\) is given by
+\begin{align*}
+	\log p(\theta)= &C_1 - \frac 1 2 (\theta-\mu)^t\Sigma^{-1}(\theta-\mu) \\
+	= &C_2 - \frac 1 2 \theta\Sigma^{-1}\theta +\theta^t\Sigma^{-1}\mu,
+\end{align*}
+for some constants \(C_1\) and \(C_2\). 
+
+So, by the Bayes formula, for some constant \(C_3\), the posterior density of \(\theta\) is given by\begin{align*}
+	\log p(\theta\mid X^T) = & C_3 + \theta^tm - \frac 1 2 \theta^t S\theta - \frac 1 2 \theta\Sigma^{-1}\theta +\theta^t\Sigma^{-1}\mu\\
+	= & C_3 + \theta^t ( m + \Sigma^{-1} \mu ) - \frac 1 2 \theta^t (S+\Sigma^{-1}) \theta\\
+	= & C_3 + \theta^t ( S + \Sigma^{-1} )  \Big  ( ( S + \Sigma^{-1} )^{-1} (m + \Sigma^{-1}\mu )\Big) - \frac 1 2 \theta^t (S+\Sigma^{-1}) \theta. 
+\end{align*}It follows that  \(p(\theta\mid X^T)\) is normally distributed with mean 
+\[( S + \Sigma^{-1} )^{-1} (m + \mu).\]
+ and covariance matrix \[(S+\Sigma^{-1})^{-1}.\]
+\end{proof}
+
+
+\section{Distribution of the posterior of a finite basis expansion with Gaussian coefficients}
+
+\begin{lemma}
+	Let \(X^T=\set{X_t:t\in[0,T]}\) be an observation of 
+	\begin{align*}
+		dX_t=b(X_t)dt+dW_t,
+	\end{align*}
+	where \(b\) is equipped with the prior distribution defined by 
+	\[
+	b=\sum_{j=1}^k\theta_j\phi_j,
+	\]
+	where \(\set{\phi_1,\ldots,\phi_k}\) is a linearly independent basis, and \(\theta=(\theta_1,\ldots,\theta_k)^t\) has multivariate normal distribution \(N(\mu,\Sigma)\). Then the  posterior distribution of \(\theta\) is \(N((S+\Sigma^{-1})^{-1}(m+\mu), (S+\Sigma^{-1})^{-1})\), where the vector \(m=(m_1,\ldots,m_k)^t\) is defined by 
+	\[
+	m_l=\int_0^T\phi_l(X_t)dX_t, \quad l=1,\ldots,k,
+	\] 
+	and the symmetric \(k\times k\)-matrix \(S\) is given by 
+	\[
+	S_{l,l'}=\int_0^T\phi_l(X_t)\phi_{l'}(X_t)dt,\quad l,l'=1,\ldots,k,
+	\]
+	provided \(S+\Sigma^{-1}\) is invertible. 
+\end{lemma}
+\begin{proof}Almost surely we have by Girsanov's theorem\begin{equation}\label{eq:girsanov}
+p(X^T\mid \theta)=\exp\left(\int_0^Tb(X_t)dX_t-\frac12\int_0^Tb(X_t)^2dt\right),
+\end{equation}with respect to the Wiener measure. So \(\log p(X^T\mid b)=\theta^tm - \frac 1 2 \theta^t S\theta\). And the log of the distribution of \(\theta\) with respect to the Lebesgue measure on \(\re^k\) is given by
+\begin{align*}
+	\log p(\theta)= &C_1 - \frac 1 2 (\theta-\mu)^t\Sigma^{-1}(\theta-\mu) \\
+	= &C_2 - \frac 1 2 \theta\Sigma^{-1}\theta +\theta^t\Sigma^{-1}\mu,
+\end{align*}
+for some constants \(C_1\) and \(C_2\). 
+
+So, by the Bayes formula, for some constant \(C_3\), the posterior density of \(\theta\) is given by\begin{align*}
+	\log p(\theta\mid X^T) = & C_3 + \theta^tm - \frac 1 2 \theta^t S\theta - \frac 1 2 \theta\Sigma^{-1}\theta +\theta^t\Sigma^{-1}\mu\\
+	= & C_3 + \theta^t ( m + \Sigma^{-1} \mu ) - \frac 1 2 \theta^t (S+\Sigma^{-1}) \theta\\
+	= & C_3 + \theta^t ( S + \Sigma^{-1} )  \Big  ( ( S + \Sigma^{-1} )^{-1} (m + \Sigma^{-1}\mu )\Big) - \frac 1 2 \theta^t (S+\Sigma^{-1}) \theta. 
+\end{align*}It follows that  \(p(\theta\mid X^T)\) is normally distributed with mean 
+\[( S + \Sigma^{-1} )^{-1} (m + \mu).\]
+ and covariance matrix \[(S+\Sigma^{-1})^{-1}.\]
+\end{proof}
+
+\end{document}

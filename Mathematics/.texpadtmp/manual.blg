@@ -1,0 +1,9 @@
+[0] Config.pm:343> INFO - This is Biber 2.5
+[0] Config.pm:346> INFO - Logfile is '/Users/janvanwaaij/Documents/Programming/Julia/SDE/Documentation/.texpadtmp/manual.blg'
+[53] biber-darwin:290> INFO - === Sun Nov 12, 2017, 13:45:42
+[79] Biber.pm:351> INFO - Reading '/Users/janvanwaaij/Documents/Programming/Julia/SDE/Documentation/.texpadtmp/manual.bcf'
+[202] Biber.pm:776> INFO - Found 0 citekeys in bib section 0
+[215] Utils.pm:149> WARN - The file '/Users/janvanwaaij/Documents/Programming/Julia/SDE/Documentation/.texpadtmp/manual.bcf' does not contain any citations!
+[223] bbl.pm:526> INFO - Writing '/Users/janvanwaaij/Documents/Programming/Julia/SDE/Documentation/.texpadtmp/manual.bbl' with encoding 'ascii'
+[223] bbl.pm:619> INFO - Output to /Users/janvanwaaij/Documents/Programming/Julia/SDE/Documentation/.texpadtmp/manual.bbl
+[223] Biber.pm:108> INFO - WARNINGS: 1
