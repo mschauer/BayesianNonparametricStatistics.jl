@@ -53,7 +53,7 @@ struct SamplePathRange{T<:StepRangeLen{Float64}} <: AbstractSamplePath
       T<:StepRangeLen{Float64}
     length(timeinterval) == length(samplevalues) ||
         error("Length timeinterval should be equal to length samplevalues")
-    step(timeinterval) >= 0 || error("Time interval should be increasing.")
+    step(timeinterval) > 0 || error("Time interval should be increasing.")
     new{T}(timeinterval, samplevalues)
   end
 end
@@ -109,13 +109,11 @@ struct SamplePath{S<:AbstractVector{Float64}, T<:AbstractVector{Float64}} <:
 
   function SamplePath(timeinterval::S, samplevalues::T) where
       {S<:AbstractVector{Float64}, T<:AbstractVector{Float64}}
-    if length(timeinterval) != length(samplevalues)
+    length(timeinterval) == length(samplevalues) ||
       error("Length of timeinterval should be equal to the length of the samplevalues vector")
-    elseif !isincreasing(timeinterval)
+    isincreasing(timeinterval) ||
       error("Timeinterval should be increasing")
-    else
-      new{S,T}(timeinterval, samplevalues)
-    end
+    new{S,T}(timeinterval, samplevalues)
   end
 end
 
@@ -136,9 +134,7 @@ X = SamplePathRange(0.:0.1:2.0, x->x^2)
 length(X)
 ```
 """
-function step(X::SamplePathRange)
-  return step(X.timeinterval)
-end
+step(X::SamplePathRange)=step(X.timeinterval)
 
 # Returns the length of timeinterval == samplevalues vectors, not the endtime!
 # TO DO: Answers to examples
@@ -158,6 +154,4 @@ X = SamplePathRange(0.:0.1:2.0, x->x^2)
 length(X)
 ```
 """
-function length(X::AbstractSamplePath)
-  return length(X.timeinterval)
-end
+length(X::AbstractSamplePath)=length(X.timeinterval)

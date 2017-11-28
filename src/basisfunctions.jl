@@ -17,18 +17,12 @@ plot(x,y)
 ```
 """
 function fourier(k::Int)
-  if k < 1
-    error("k should be positive")
-  end
+  k ≥ 1 || error("k should be positive")
   sqrttwo = sqrt(2.0)
   if k % 2 == 1
-    return function(x::Float64)
-      return sqrttwo * sinpi((k+1)*x)
-    end
+    return x -> sqrttwo * sinpi((k+1)*x)
   else
-    return function(x::Float64)
-      return sqrttwo * cospi(k*x)
-    end
+    return  x -> sqrttwo * cospi(k*x)
   end
 end
 
@@ -78,11 +72,8 @@ end
 ```
 """
 function faberschauder(j::Int,k::Int)
-  if j < 0
-    error("j should be a nonnegative integer.")
-  elseif !(1≤k≤2^j)
-    error("k should be an integer between 1 and 2^j.")
-  end
+  j ≥ 0 || error("j should be a nonnegative integer.")
+  1≤k≤2^j || error("k should be an integer between 1 and 2^j.")
   j_float = Float64(j)
   return function(x::Float64)
     y = mod(x,1.0)

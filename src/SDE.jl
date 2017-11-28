@@ -44,13 +44,9 @@ struct SDE{S<:Function, T<:Function} <: AbstractSDE
   dt::Float64
 
   function SDE(b::S, σ::T, beginvalue, endtime, dt) where {S<:Function, T<:Function}
-    if dt <= 0
-      error("The time discretisation (dt) should be positive")
-    elseif endtime<= 0
-      error("The endtime should be positive")
-    else
-      new{S, T}(b, σ, beginvalue, endtime, dt)
-    end
+    dt > 0 || error("The time discretisation (dt) should be positive")
+    endtime > 0 || error("The endtime should be positive")
+    new{S, T}(b, σ, beginvalue, endtime, dt)
   end
 end
 
@@ -86,13 +82,9 @@ struct SDEWithConstantVariance{S<:Function} <: AbstractSDE
 
     function SDEWithConstantVariance(b::T, σ, beginvalue, endtime, dt) where
             T<:Function
-        if dt <= 0
-          error("The time discretisation (dt) should be positive")
-        elseif endtime<= 0
-          error("The endtime should be positive")
-        else
-          new{T}(b, σ, beginvalue, endtime, dt)
-        end
+        dt > 0 || error("The time discretisation (dt) should be positive")
+        endtime > 0 || error("The endtime should be positive")
+        new{T}(b, σ, beginvalue, endtime, dt)
     end
 end
 

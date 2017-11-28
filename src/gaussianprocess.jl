@@ -17,7 +17,7 @@ abstract type AbstractGaussianProcess end
 
 """
     struct GaussianProcess{T<:AbstractMvNormal} <: AbstractGaussianProcess
-        basis::Vector{Function}
+        basis::Vector{<:Function}
         distribution::T
     end
 
@@ -41,18 +41,15 @@ plot(X)
 ```
 """
 struct GaussianProcess{T<:AbstractMvNormal} <: AbstractGaussianProcess
-  basis::Vector{Function}
+  basis::Vector{<:Function}
   # distribution is the distribution of the coefficients corresponding to the
   # basis. distribution is a AbstractMvNormal subtype of the Distributions
   # package.
   distribution::T
   function GaussianProcess(basis::Vector{<:Function}, distribution::T) where
         T<:AbstractMvNormal
-      if !(length(basis)==length(distribution))
-          error("The basis and distribution are not of equal length.")
-      else
-          new{T}(basis, distribution)
-      end
+      length(basis)==length(distribution) || error("The basis and distribution are not of equal length.")
+      new{T}(basis, distribution)
   end
 end
 
@@ -112,7 +109,7 @@ end
 """
     struct FaberSchauderExpansionWithGaussianCoefficients <: AbstractGaussianProcess
         higestlevel::Int64
-        basis::Vector{Function}
+        basis::Vector{<:Function}
         distribution::MvNormalCanon{Float64, PDSparseMat{Float64, SparseMatrixCSC{Float64, Int64}}, S} where S<:Union{Vector{Float64}, ZeroVector{Float64}}
         dependentcoefficients::Symmetric{Bool, Array{Bool, 2}}
     end
@@ -144,15 +141,13 @@ plot(x, f.(x))
 """
 struct FaberSchauderExpansionWithGaussianCoefficients <: AbstractGaussianProcess
     higestlevel::Int64
-    basis::Vector{Function}
+    basis::Vector{<:Function}
     distribution::MvNormalCanon{Float64, PDSparseMat{Float64, SparseMatrixCSC{Float64, Int64}}, S} where S<:Union{Vector{Float64}, ZeroVector{Float64}}
     dependentcoefficients::Symmetric{Bool, Array{Bool, 2}}
     function FaberSchauderExpansionWithGaussianCoefficients(higestlevel::Int64,
         distribution::MvNormalCanon{Float64, PDSparseMat{Float64,
         SparseMatrixCSC{Float64,Int64}}, T}) where T<:Union{Vector{Float64},ZeroVector{Float64}}
-        if length(distribution) != 2^(higestlevel+1)
-            error("The length of the distribution is not equal to 2^(higestlevel+1).")
-        end
+        length(distribution) == 2^(higestlevel+1) || error("The length of the distribution is not equal to 2^(higestlevel+1).")
         dependentcoefficients = calculatedependencystructurefaberschauderbasis(higestlevel)
         basis = vcat(faberschauderone, [faberschauder(j,k) for j in 0:higestlevel for k in 1:2^j])
         new(higestlevel, basis, distribution, dependentcoefficients)
@@ -162,9 +157,7 @@ end
 # Constructor
 function FaberSchauderExpansionWithGaussianCoefficients(inversevariancesperlevel::Vector{Float64})
     lenghtinversevariancesperlevel = length(inversevariancesperlevel)
-    if  lenghtinversevariancesperlevel == 0
-        error("inversevariancesperlevel is of zero length.")
-    end
+    lenghtinversevariancesperlevel == 0 && error("inversevariancesperlevel is of zero length.")
     # We start with level zero.
     higestlevel = lenghtinversevariancesperlevel - 1
     # There are two functions of level zero.
@@ -194,9 +187,7 @@ length(Π)
 length(Π)
 ```
 """
-function length(Π::AbstractGaussianProcess)
-  return length(Π.basis)
-end
+length(Π::AbstractGaussianProcess)=length(Π.basis)
 
 """
     sumoffunctions(vectoroffunctions::Vector{<:Function}, vectorofscalars::Vector{Float64})
@@ -208,10 +199,7 @@ function.
 function sumoffunctions(vectoroffunctions::Vector{<:Function},
     vectorofscalars::Vector{Float64})
   n = length(vectoroffunctions)
-  if n != length(vectorofscalars)
-    error("The vector of functions and the vector of scalars should
-     be of equal length")
-  end
+  n == length(vectorofscalars) || error("The vector of functions and the vector of scalars should be of equal length")
   return function(x::Float64)
     value = 0.0;
     for i in 1:n
@@ -311,9 +299,7 @@ end
 
 Equivalent to plot(X.timeinterval, X.samplevalues).
 """
-function plot(X::AbstractSamplePath)
-  plot(X.timeinterval, X.samplevalues)
-end
+plot(X::AbstractSamplePath) = plot(X.timeinterval, X.samplevalues)
 
 function dividefunctions(f::Function, g::Function)
     return function(x) return f(x)/g(x) end
