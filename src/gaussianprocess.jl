@@ -46,7 +46,7 @@ struct GaussianProcess{T<:AbstractMvNormal} <: AbstractGaussianProcess
   # basis. distribution is a AbstractMvNormal subtype of the Distributions
   # package.
   distribution::T
-  function GaussianProcess(basis::Vector{Function}, distribution::T) where
+  function GaussianProcess(basis::Vector{<:Function}, distribution::T) where
         T<:AbstractMvNormal
       if !(length(basis)==length(distribution))
           error("The basis and distribution are not of equal length.")

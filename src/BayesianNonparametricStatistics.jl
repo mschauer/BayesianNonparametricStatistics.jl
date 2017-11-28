@@ -21,6 +21,9 @@ fourierseriesprior, faberschauderprior,
 calculatedependencystructurefaberschauderbasis, sumoffunctions
 
 # model.jl implements AbstractModel and SDEModel.
+
+# Hier beginnen met short-circuit evaluation invoegen!
+
 include("model.jl")
 # samplepath.jl implements SamplePath, SamplePathRange, AbstractSamplePath and
 # extends Base.step and Base.length to the appropriate types.
@@ -35,5 +38,4 @@ include("SDE.jl")
 # the posterior, with associated methods calculateLebesgueintegral,
 # calculatestochasticintegral, calculatedependencystructurefaberschauderbasis.
 include("gaussianprocess.jl")
-
 end # End of module.

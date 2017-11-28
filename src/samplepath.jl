@@ -51,13 +51,10 @@ struct SamplePathRange{T<:StepRangeLen{Float64}} <: AbstractSamplePath
 
   function SamplePathRange(timeinterval::T, samplevalues) where
       T<:StepRangeLen{Float64}
-    if length(timeinterval) != length(samplevalues)
-      error("Length timeinterval should be equal to length samplevalues")
-    elseif step(timeinterval) < 0
-      error("Time interval should be increasing.")
-    else
-      new{T}(timeinterval, samplevalues)
-    end
+    length(timeinterval) == length(samplevalues) ||
+        error("Length timeinterval should be equal to length samplevalues")
+    step(timeinterval) >= 0 || error("Time interval should be increasing.")
+    new{T}(timeinterval, samplevalues)
   end
 end
 # Constructor
@@ -72,9 +69,7 @@ NonparametricBayesForDiffusions.
 """
 function isincreasing(x::AbstractVector{<:Number})
   for i in 1:length(x)-1
-    if x[i+1] <= x[i]
-      return false
-    end
+    x[i+1] <= x[i] && return false
   end
   return true
 end

@@ -15,6 +15,12 @@ srand(123)
                 @test M.beginvalue == x
             end
         end
+        σ = identity
+        M = SDEModel(σ, 0.0)
+        @test M.σ == identity
+        σ(x) = 1
+        M = SDEModel(σ, 0.0)
+        @test M.σ == σ
     end
 
     @testset "samplepath.jl" begin
@@ -31,6 +37,14 @@ srand(123)
         Y = SamplePathRange(0.0:0.1:1.0, x->2*x)
         @test Y.timeinterval == 0.0:0.1:1.0
         @test Y.samplevalues == collect(0.0:0.2:2.0)
+
+        @test_throws ErrorException SamplePathRange(0.0:2.0, [1.0, 2.0])
+
+        @test_throws ErrorException SamplePathRange(0.0:-0.1:-0.1, [0.0, 2.0])
+
+        @test_throws ErrorException SamplePath([0.1, 2.0],[3.0])
+
+        @test_throws ErrorException SamplePath([0.1, 2.0, 1.0], [1.0,2.0,3.0])
 
         @test BayesianNonparametricStatistics.isincreasing(0:0.1:1)
         @test !BayesianNonparametricStatistics.isincreasing(0:-0.1:-1.0)
@@ -69,6 +83,10 @@ srand(123)
     end
 
     @testset "basisfunctions.jl" begin
+        @test_throws ErrorException fourier(0)
+        @test_throws ErrorException fourier(-1)
+        @test_throws ErrorException fourier(-10)
+
         # The Fourier functions are orthogonal.
         n = 3
         X = SamplePathRange(0.:.01:1.0, 0.:.01:1.0)
@@ -101,6 +119,12 @@ srand(123)
             @test abs(minimum(values)+sqrt(2.0)) < 0.1
             @test abs(maximum(values)-sqrt(2.0)) < 0.1
         end
+
+        @test_throws ErrorException faberschauder(-1, 1)
+        @test_throws ErrorException faberschauder(-3, 1)
+        @test_throws ErrorException faberschauder(1, 0)
+        @test_throws ErrorException faberschauder(1, -2)
+        @test_throws ErrorException faberschauder(1, 3)
 
         # Below we test Faber-Schauder functions on their mathematical properities, up
         # to level n, defined below.
@@ -168,8 +192,12 @@ srand(123)
 
         @test supertype(AbstractSDE) == Any
 
+        @test_throws ErrorException SDE(x->0.0, x->1.0, 0.0, 10.0, -0.1)
+
+        @test_throws ErrorException SDE(x->0.0, x->1.0, 0.0, -1.0, 0.1)
+
         # The following should represent a Brownian motion.
-        sde_SDE_type = SDE(x->0, x->1, 0, 1, 0.001)
+        sde_SDE_type = SDE(x->0.0, x->1.0, 0, 1, 0.001)
 
         lengthvector = 1000
         x = Vector{Float64}(lengthvector)
@@ -201,7 +229,11 @@ srand(123)
         @test length(X) == length(0.0:geometricbrownianmotion.dt:geometricbrownianmotion.endtime)
         @test X.timeinterval ==  0.0:geometricbrownianmotion.dt:geometricbrownianmotion.endtime
 
+        @test_throws ErrorException SDEWithConstantVariance(x->0.0, 1.0, 0.0,
+            10.0, -0.1)
 
+        @test_throws ErrorException SDEWithConstantVariance(x->0.0, 1.0, 0.0,
+            -1.0, 0.1)
 
         sde_SDEWithConstantVariance_type = SDEWithConstantVariance(x->0, 1, 0, 1, 0.001)
 
@@ -237,6 +269,9 @@ srand(123)
         Set([GaussianProcess, FaberSchauderExpansionWithGaussianCoefficients])
 
         @test supertype(AbstractGaussianProcess) == Any
+
+        @test_throws ErrorException GaussianProcess([fourier(k) for k in 1:2],
+            MvNormal([1.0,1.0,1.0]))
 
         X = GaussianProcess([sin, cos], MvNormal([1.0, 1.0]))
 
@@ -319,8 +354,14 @@ srand(123)
 
         distribution = MvNormalCanon(A)
 
+        @test_throws ErrorException FaberSchauderExpansionWithGaussianCoefficients(1,distribution)
+
+        @test_throws ErrorException FaberSchauderExpansionWithGaussianCoefficients(Vector{Float64}(0))
+
         Π = FaberSchauderExpansionWithGaussianCoefficients(0,distribution)
         @test length(Π) == 2
+
+        @test_throws ErrorException sumoffunctions([sin], [1.0,2.0])
 
         n = 10000
         x = Vector{Float64}(n)
@@ -417,72 +458,72 @@ srand(123)
         @test BayesianNonparametricStatistics.calculatestochasticintegral(identity, X) ≈ 55.0
         @test BayesianNonparametricStatistics.calculateLebesgueintegral(x->1., X) ≈ 10.0
 
-        α = 0.5
-        Π = FaberSchauderExpansionWithGaussianCoefficients([2^(α*j) for j in 1:5])
+        # α = 0.5
+        # Π = FaberSchauderExpansionWithGaussianCoefficients([2^(α*j) for j in 1:5])
+        #
+        # sde = SDEWithConstantVariance(x->0.0, 1.0, 0.0, 10000.0, 0.01)
+        # X = rand(sde)
+        #
+        # M = SDEModel(1.0, 0.0)
+        #
+        # postΠ = calculateposterior(Π, X, M)
+        #
+        # n = 1000
+        # y = 0.0:0.01:1.0
+        # x = Array{Float64}(length(y),n)
+        # for k in 1:n
+        #     f = rand(postΠ)
+        #     x[:,k] = f.(y)
+        # end
+        #
+        # @test maximum(abs.(mean(x,1))) < 0.1
+        #
+        # M = SDEModel(1.0, 0.0)
+        #
+        # Π = GaussianProcess([fourier(k) for k in 1:40], MvNormal([k^(-1.0) for k in 1:40]))
+        #
+        # postΠ = calculateposterior(Π, X, M)
+        #
+        # n = 1000
+        # y = 0.0:0.01:1.0
+        # x = Array{Float64}(length(y),n)
+        # for k in 1:n
+        #     f = rand(postΠ)
+        #     x[:,k] = f.(y)
+        # end
+        #
+        # @test maximum(abs.(mean(x,1))) < 0.1
+        #
+        # M = SDEModel(x->1.0, 0.0)
+        #
+        # Π = GaussianProcess([fourier(k) for k in 1:40], MvNormal([k^(-1.0) for k in 1:40]))
 
-        sde = SDEWithConstantVariance(x->0.0, 1.0, 0.0, 10000.0, 0.01)
-        X = rand(sde)
+        # postΠ = calculateposterior(Π, X, M)
+        #
+        # n = 1000
+        # y = 0.0:0.01:1.0
+        # x = Array{Float64}(length(y),n)
+        # for k in 1:n
+        #     f = rand(postΠ)
+        #     x[:,k] = f.(y)
+        # end
+        #
+        # @test maximum(abs.(mean(x,1))) < 0.1
+        #
+        # M = SDEModel(x->1.0, 0.0)
+        #
+        # Π = FaberSchauderExpansionWithGaussianCoefficients([2^(α*j) for j in 1:5])
 
-        M = SDEModel(1.0, 0.0)
-
-        postΠ = calculateposterior(Π, X, M)
-
-        n = 1000
-        y = 0.0:0.01:1.0
-        x = Array{Float64}(length(y),n)
-        for k in 1:n
-            f = rand(postΠ)
-            x[:,k] = f.(y)
-        end
-
-        @test maximum(abs.(mean(x,1))) < 0.1
-
-        M = SDEModel(1.0, 0.0)
-
-        Π = GaussianProcess([fourier(k) for k in 1:40], MvNormal([k^(-1.0) for k in 1:40]))
-
-        postΠ = calculateposterior(Π, X, M)
-
-        n = 1000
-        y = 0.0:0.01:1.0
-        x = Array{Float64}(length(y),n)
-        for k in 1:n
-            f = rand(postΠ)
-            x[:,k] = f.(y)
-        end
-
-        @test maximum(abs.(mean(x,1))) < 0.1
-
-        M = SDEModel(x->1.0, 0.0)
-
-        Π = GaussianProcess([fourier(k) for k in 1:40], MvNormal([k^(-1.0) for k in 1:40]))
-
-        postΠ = calculateposterior(Π, X, M)
-
-        n = 1000
-        y = 0.0:0.01:1.0
-        x = Array{Float64}(length(y),n)
-        for k in 1:n
-            f = rand(postΠ)
-            x[:,k] = f.(y)
-        end
-
-        @test maximum(abs.(mean(x,1))) < 0.1
-
-        M = SDEModel(x->1.0, 0.0)
-
-        Π = FaberSchauderExpansionWithGaussianCoefficients([2^(α*j) for j in 1:5])
-
-        postΠ = calculateposterior(Π, X, M)
-
-        n = 1000
-        y = 0.0:0.01:1.0
-        x = Array{Float64}(length(y),n)
-        for k in 1:n
-            f = rand(postΠ)
-            x[:,k] = f.(y)
-        end
-
-        @test maximum(abs.(mean(x,1))) < 0.1
+        # postΠ = calculateposterior(Π, X, M)
+        #
+        # n = 1000
+        # y = 0.0:0.01:1.0
+        # x = Array{Float64}(length(y),n)
+        # for k in 1:n
+        #     f = rand(postΠ)
+        #     x[:,k] = f.(y)
+        # end
+        #
+        # @test maximum(abs.(mean(x,1))) < 0.1
     end
 end
