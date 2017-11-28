@@ -1,6 +1,3 @@
-# TO DO: PyPlot.plot aanpassen zodat die meer argumenten kan oppakken met ...
-#
-
 __precompile__(true)
 
 module BayesianNonparametricStatistics
