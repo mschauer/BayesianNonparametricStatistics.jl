@@ -93,7 +93,7 @@ end
     rand(sde::SDEWithConstantVariance)
     rand(sde::SDE)
 
-Returns a SamplePathRange object which represents a sample path from an
+Returns a SamplePath object which represents a sample path from an
 AbstractSDE subtype sde. From time 0.0 to time sde.endtime, discretised with
 precision sde.dt.
 
@@ -115,7 +115,7 @@ X = rand(sde)
 plot(X)
 ```
 """
-function rand(sde::SDEWithConstantVariance)::SamplePathRange
+function rand(sde::SDEWithConstantVariance)::SamplePath
   timeinterval = 0.0:sde.dt:sde.endtime
   lengthoftimeinterval = length(timeinterval)
   # Brownian motion increments multiplied with variance.
@@ -127,11 +127,11 @@ function rand(sde::SDEWithConstantVariance)::SamplePathRange
     samplevalues[k] = prevXval + sde.b(prevXval)*sde.dt + increments[k]
     prevXval = samplevalues[k]
   end
-  return SamplePathRange(timeinterval, samplevalues)
+  return SamplePath(timeinterval, samplevalues)
 end
 
 # Extends Distributions.rand for SDE types.
-function rand(sde::SDE)::SamplePathRange
+function rand(sde::SDE)::SamplePath
   timeinterval = 0.0:sde.dt:sde.endtime
   lengthoftimeinterval = length(timeinterval)
   BMincrements = rand(Normal(0, sqrt(sde.dt)), lengthoftimeinterval)
@@ -143,5 +143,5 @@ function rand(sde::SDE)::SamplePathRange
       sde.σ(prevXval)*BMincrements[k]
     prevXval = samplevalues[k]
   end
-  return SamplePathRange(timeinterval, samplevalues)
+  return SamplePath(timeinterval, samplevalues)
 end

@@ -39,6 +39,7 @@ See also: faberschauder
 x=-2.:0.001:2
 y=faberschauderone.(x)
 using PyPlot
+clf()
 plot(x,y)
 ```
 """

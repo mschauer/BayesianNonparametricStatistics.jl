@@ -3,76 +3,27 @@
 """
     abstract type AbstractSamplePath <: Any
 
-subtypes: SamplePath and SamplePathRange.
+subtype: SamplePath.
 
-Both subtypes implement a continuous samplepath (necessarily discretised).
+Its subtype implements a continuous samplepath.
 """
 abstract type AbstractSamplePath end
 
 """
-    SamplePathRange(timeinterval::T, samplevalues::Vector{Float64}) <:
-        AbstractSamplePath where T<:StepRangeLen{Float64}
-
-Implements a continuous stochastic process, where the time interval is
-equidistance.
-
-Constructors:
-
-SamplePathRange(timeinterval, samplevalues), with timeinterval a Float64 range
-object, and samplevalues a Float64 vector of the same length.
-
-SamplePathRange(timeinterval, f), with timeinterval a Float64 range object and f
-a function that takes Float64 and returns a Float64. Returns
-SamplePathRange(timeinterval, f.(timeinterval)).
-
-See also: AbstractSamplePath, SamplePath, SDE, SDEWithConstantVariance.
-
-# Examples
-
-```julia
-using PyPlot
-clf()
-x = 0.0:0.001:10.0
-y = sin.(x)
-X = SamplePathRange(x,y)
-plot(X)
-```
-
-```julia
-using PyPlot
-sde = SDEWithConstantVariance(sin, 1, 0, 10, 0.001);
-X = rand(sde)
-plot(X)
-```
-"""
-struct SamplePathRange{T<:StepRangeLen{Float64}} <: AbstractSamplePath
-  timeinterval::T
-  samplevalues::Vector{Float64}
-
-  function SamplePathRange(timeinterval::T, samplevalues) where
-      T<:StepRangeLen{Float64}
-    length(timeinterval) == length(samplevalues) ||
-        error("Length timeinterval should be equal to length samplevalues")
-    step(timeinterval) > 0 || error("Time interval should be increasing.")
-    new{T}(timeinterval, samplevalues)
-  end
-end
-# Constructor
-SamplePathRange(timeinterval::StepRangeLen{Float64}, f::Function) =
-    SamplePathRange(timeinterval, f.(timeinterval))
-
-"""
-    isincreasing(x::AbstractVector{<:Number})::Bool
+    isincreasing(x::AbstractVector{T})::Bool where T <: Number
+    isincreasing(x::Range{T})::Bool where T <: Number
 
 Tests whether a vector of numbers is strictly increasing. Is internal to
 NonparametricBayesForDiffusions.
 """
-function isincreasing(x::AbstractVector{<:Number})
+function isincreasing(x::AbstractVector{T}) where T <: Number
   for i in 1:length(x)-1
     x[i+1] <= x[i] && return false
   end
   return true
 end
+
+isincreasing(x::Range{T}) where T <: Number = step(x) > 0
 
 """
     SamplePath(timeinterval::S, samplevalues::T) where
@@ -88,22 +39,19 @@ end
  SamplePath(timeinterval, f::Function) =
     SamplePath(timeinterval, f.(timeinterval))
 
-
- See also: AbstractSamplePath, SamplePathRange.
-
  # Examples
 
 ```julia
 using PyPlot
 clf()
-t = logspace(-5,5,10)
-v = exp.(t)
+t = 0.0:0.1:2.0
+v = sinpi.(t)
 X = SamplePath(t, v)
 plot(X)
 ```
 """
-struct SamplePath{S<:AbstractVector{Float64}, T<:AbstractVector{Float64}} <:
-    AbstractSamplePath
+struct SamplePath{S<:AbstractVector{Float64},
+        T<:AbstractVector{Float64}} <: AbstractSamplePath
   timeinterval::S
   samplevalues::T
 
@@ -118,28 +66,14 @@ struct SamplePath{S<:AbstractVector{Float64}, T<:AbstractVector{Float64}} <:
 end
 
 #constructor
-SamplePath(timeinterval::T, f::Function) where T<:AbstractVector{Float64} =
-SamplePath(timeinterval, f.(timeinterval))
+SamplePath(timeinterval, f::Function) = SamplePath(timeinterval, f.(timeinterval))
 
-"""
-    step(X::SamplePathRange)
-
-Returns the step of the timeinterval field; the discretisation step of the
-sample path.
-
-# Example
-
-```julia
-X = SamplePathRange(0.:0.1:2.0, x->x^2)
-length(X)
-```
-"""
-step(X::SamplePathRange)=step(X.timeinterval)
+step(X::SamplePath{S}) where S<:Range{<:Number} = step(X.timeinterval)
 
 # Returns the length of timeinterval == samplevalues vectors, not the endtime!
 # TO DO: Answers to examples
 """
-    length(X::AbstractSamplePath)
+    length(X::SamplePath)
 
 Returns the length of the vector timeinterval == length vector samplevalues.
 
@@ -150,8 +84,8 @@ length(X)
 ```
 
 ```julia
-X = SamplePathRange(0.:0.1:2.0, x->x^2)
-length(X)
+X = SamplePath(0.0:0.1:2π, sin)
+length(X) == length(0.0:0.1:2π)
 ```
 """
-length(X::AbstractSamplePath)=length(X.timeinterval)
+length(X::SamplePath)=length(X.timeinterval)

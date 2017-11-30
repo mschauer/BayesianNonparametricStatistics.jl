@@ -275,19 +275,18 @@ end
 # Calculates the Lebesgue integral.
 # Is not exported. Used in calculateposterior.
 """
-    calculateLebesgueintegral(f::Function, X::SamplePathRange)
-    calculateLebesgueintegral(f::Function, X::AbstractSamplePath)
+    calculateLebesgueintegral(f::Function, X::SamplePath)
 
 Is an internal function. Calculates the Lebesgue integral \int_0^T f(X_t)dt,
 with T=X.timeinterval[end].
 """
-function calculateLebesgueintegral(f::Function, X::SamplePathRange)::Float64
+function calculateLebesgueintegral(f::Function, X::SamplePath{S})::Float64 where S <: Range{Float64}
   return sum(map(f, X.samplevalues[1:end-1]))*step(X)
 end
 
 # Calculates the Lebesgue integral for SamplePath objects, but would also work
-# for SamplePathRange objects.
-function calculateLebesgueintegral(f::Function, X::AbstractSamplePath)::Float64
+# for SamplePath objects.
+function calculateLebesgueintegral(f::Function, X::SamplePath)::Float64
   return sum(map(f, X.samplevalues[1:end-1]).*(X.timeinterval[2:end]-
     X.timeinterval[1:end-1]))
 end

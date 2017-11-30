@@ -6,10 +6,10 @@ srand(123)
 
 @testset "BayesianNonparametricStatistics package" begin
     @testset "model.jl" begin
-        @test Set(subtypes(AbstractModel)) == Set([SDEModel])
+        @test supertype(SDEModel) == AbstractModel
         @test supertype(AbstractModel) == Any
-        for σ in -10.0:0.1:10.0
-            for x in -10.0:0.1:10.0
+        for σ in -2.0:0.1:2.0
+            for x in -2.0:0.1:2.0
                 M = SDEModel(σ, x)
                 @test M.σ == σ
                 @test M.beginvalue == x
@@ -21,26 +21,58 @@ srand(123)
         σ(x) = 1
         M = SDEModel(σ, 0.0)
         @test M.σ == σ
+
+        σ(x) = 2+sin(x)
+        M = SDEModel(σ, 1.3)
+        @test M.σ == σ
+        @test M.beginvalue == 1.3
     end
 
     @testset "samplepath.jl" begin
-        @test Set(subtypes(AbstractSamplePath)) ==
-            Set([SamplePath, SamplePathRange])
+        @test supertype(SamplePath) == AbstractSamplePath
 
         @test supertype(AbstractSamplePath) == Any
 
-        X = SamplePathRange(0.0:0.1:1.0, 1:11)
+        X = SamplePath(0.0:0.1:1.0, sin)
+        @test X.timeinterval == 0.0:0.1:1.0
+        @test X.samplevalues == sin.(0.0:0.1:1.0)
+
+        X = SamplePath(0.0:0.1:1.0, 1.0:11.0)
 
         @test X.timeinterval == 0.0:0.1:1.0
-        @test X.samplevalues == [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]
+        @test X.samplevalues == 1.0:11.0
 
-        Y = SamplePathRange(0.0:0.1:1.0, x->2*x)
-        @test Y.timeinterval == 0.0:0.1:1.0
-        @test Y.samplevalues == collect(0.0:0.2:2.0)
+        X = SamplePath(0.0:0.1:1.0, x->2*x)
+        @test X.timeinterval == 0.0:0.1:1.0
+        @test X.samplevalues == collect(0.0:0.2:2.0)
 
-        @test_throws ErrorException SamplePathRange(0.0:2.0, [1.0, 2.0])
+        @test step(X) == 0.1
+        @test length(X) == 11
 
-        @test_throws ErrorException SamplePathRange(0.0:-0.1:-0.1, [0.0, 2.0])
+        X = SamplePath([1., 2.], [1.1, 2.1])
+        @test X.timeinterval == [1., 2.]
+        @test X.samplevalues == [1.1, 2.1]
+
+        @test length(X) == 2
+
+        X = SamplePath([1.0, 3.0, 5.0, 9.0], x->x^2)
+        @test X.timeinterval == [1.0, 3.0, 5.0, 9.0]
+        @test X.samplevalues == [1.0, 9.0, 25.0, 81.0]
+
+        X = SamplePath(collect(-2.0:0.01:2.0), sin)
+        X.timeinterval == collect(-2.0:0.01:2.0)
+        X.samplevalues == sin.(collect(-2.0:0.01:2.0))
+
+        X = SamplePath(-2.0:0.01:2.0, sin)
+        X.timeinterval == collect(-2.0:0.01:2.0)
+        X.samplevalues == sin.(collect(-2.0:0.01:2.0))
+
+        X = SamplePath(0.0:0.1:2π, sin)
+        @test length(X) == length(0.0:0.1:2π)
+
+        @test_throws ErrorException SamplePath(0.0:2.0, [1.0, 2.0])
+
+        @test_throws ErrorException SamplePath(0.0:-0.1:-0.1, [0.0, 2.0])
 
         @test_throws ErrorException SamplePath([0.1, 2.0],[3.0])
 
@@ -55,31 +87,6 @@ srand(123)
         @test BayesianNonparametricStatistics.isincreasing([1., 2., 2.00000001, 2.00000002])
         @test !BayesianNonparametricStatistics.isincreasing([2.,2.,2.,2.,2.])
         @test !BayesianNonparametricStatistics.isincreasing([2.,2., 3.0, 3.0001])
-
-        Z = SamplePath([1., 2.], [1.1, 2.1])
-        Z.timeinterval == [1., 2.]
-        Z.samplevalues == [1.1, 2.1]
-
-        W = SamplePathRange(0.0:0.1:1.0, sin)
-        @test W.timeinterval == 0.0:0.1:1.0
-        @test W.samplevalues == sin.(0.0:0.1:1.0)
-
-        @test step(Y) == 0.1
-
-        @test length(Y) == 11
-        @test length(Z) == 2
-
-        X = SamplePath([1.0, 3.0, 5.0, 9.0], x->x^2)
-        @test X.timeinterval == [1.0, 3.0, 5.0, 9.0]
-        @test X.samplevalues == [1.0, 9.0, 25.0, 81.0]
-
-        X = SamplePath(collect(-2.0:0.01:2.0), sin)
-        X.timeinterval == collect(-2.0:0.01:2.0)
-        X.samplevalues == sin.(collect(-2.0:0.01:2.0))
-
-        X = SamplePath(-2.0:0.01:2.0, sin)
-        X.timeinterval == collect(-2.0:0.01:2.0)
-        X.samplevalues == sin.(collect(-2.0:0.01:2.0))
     end
 
     @testset "basisfunctions.jl" begin
@@ -88,19 +95,20 @@ srand(123)
         @test_throws ErrorException fourier(-10)
 
         # The Fourier functions are orthogonal.
-        n = 3
-        X = SamplePathRange(0.:.01:1.0, 0.:.01:1.0)
-        for k in 1:n-1
-            for l in k+1:n
-                @test abs(BayesianNonparametricStatistics.calculateLebesgueintegral(x->fourier(k)(x)*fourier(l)(x), X))<0.1
-            end
-        end
-        # And the square integrates to one.
-        for k in 1:n
-            @test abs(BayesianNonparametricStatistics.calculateLebesgueintegral(x->fourier(k)(x)^2,X)-1.) <0.1
-        end
-
+        # n = 3
+        # X = SamplePath(0.:.01:1.0, 0.:.01:1.0)
+        # for k in 1:n-1
+        #     for l in k+1:n
+        #         @test abs(BayesianNonparametricStatistics.calculateLebesgueintegral(x->fourier(k)(x)*fourier(l)(x), X))<0.1
+        #     end
+        # end
+        # # And the square integrates to one.
+        # for k in 1:n
+        #     @test abs(BayesianNonparametricStatistics.calculateLebesgueintegral(x->fourier(k)(x)^2,X)-1.) <0.1
+        # end
+        #
         # They are one-periodic.
+        n = 3
         x = 0.0:0.1:0.9
         for k in 1:n
             for y in x
@@ -113,6 +121,7 @@ srand(123)
         end
 
         # They have minimum -sqrt(2) and maximum sqrt(2).
+        n = 3
         x = 0.0:0.01:1.0
         for k in 1:n
             values = map(fourier(k), x)
@@ -129,7 +138,7 @@ srand(123)
         # Below we test Faber-Schauder functions on their mathematical properities, up
         # to level n, defined below.
         n = 2
-        X=SamplePathRange(0.:0.001:1.0,0.:0.001:1.0)
+        X=SamplePath(0.:0.001:1.0,0.:0.001:1.0)
 
         # Faber-Schauder functions are level-wise orthogonal, for levels j≥1.
         for j in 1:n
@@ -450,7 +459,7 @@ srand(123)
         @test abs(mean(x)-2.0) < 0.1
         @test abs(var(x)-1.5) < 0.1
 
-        X = SamplePathRange(0.0:10.0, [1.,2.,3.,4.,5.,6.,7.,8.,9.,10.,11.])
+        X = SamplePath(0.0:10.0, [1.,2.,3.,4.,5.,6.,7.,8.,9.,10.,11.])
         @test BayesianNonparametricStatistics.calculatestochasticintegral(identity, X) ≈ 55.0
         @test BayesianNonparametricStatistics.calculateLebesgueintegral(x->1., X) ≈ 10.0
 
@@ -458,72 +467,72 @@ srand(123)
         @test BayesianNonparametricStatistics.calculatestochasticintegral(identity, X) ≈ 55.0
         @test BayesianNonparametricStatistics.calculateLebesgueintegral(x->1., X) ≈ 10.0
 
-        # α = 0.5
-        # Π = FaberSchauderExpansionWithGaussianCoefficients([2^(α*j) for j in 1:5])
-        #
-        # sde = SDEWithConstantVariance(x->0.0, 1.0, 0.0, 10000.0, 0.01)
-        # X = rand(sde)
-        #
-        # M = SDEModel(1.0, 0.0)
-        #
-        # postΠ = calculateposterior(Π, X, M)
-        #
-        # n = 1000
-        # y = 0.0:0.01:1.0
-        # x = Array{Float64}(length(y),n)
-        # for k in 1:n
-        #     f = rand(postΠ)
-        #     x[:,k] = f.(y)
-        # end
-        #
-        # @test maximum(abs.(mean(x,1))) < 0.1
-        #
-        # M = SDEModel(1.0, 0.0)
-        #
-        # Π = GaussianProcess([fourier(k) for k in 1:40], MvNormal([k^(-1.0) for k in 1:40]))
-        #
-        # postΠ = calculateposterior(Π, X, M)
-        #
-        # n = 1000
-        # y = 0.0:0.01:1.0
-        # x = Array{Float64}(length(y),n)
-        # for k in 1:n
-        #     f = rand(postΠ)
-        #     x[:,k] = f.(y)
-        # end
-        #
-        # @test maximum(abs.(mean(x,1))) < 0.1
-        #
-        # M = SDEModel(x->1.0, 0.0)
-        #
-        # Π = GaussianProcess([fourier(k) for k in 1:40], MvNormal([k^(-1.0) for k in 1:40]))
+        α = 0.5
+        Π = FaberSchauderExpansionWithGaussianCoefficients([2^(α*j) for j in 1:5])
 
-        # postΠ = calculateposterior(Π, X, M)
-        #
-        # n = 1000
-        # y = 0.0:0.01:1.0
-        # x = Array{Float64}(length(y),n)
-        # for k in 1:n
-        #     f = rand(postΠ)
-        #     x[:,k] = f.(y)
-        # end
-        #
-        # @test maximum(abs.(mean(x,1))) < 0.1
-        #
-        # M = SDEModel(x->1.0, 0.0)
-        #
-        # Π = FaberSchauderExpansionWithGaussianCoefficients([2^(α*j) for j in 1:5])
+        sde = SDEWithConstantVariance(x->0.0, 1.0, 0.0, 10000.0, 0.01)
+        X = rand(sde)
 
-        # postΠ = calculateposterior(Π, X, M)
-        #
-        # n = 1000
-        # y = 0.0:0.01:1.0
-        # x = Array{Float64}(length(y),n)
-        # for k in 1:n
-        #     f = rand(postΠ)
-        #     x[:,k] = f.(y)
-        # end
-        #
-        # @test maximum(abs.(mean(x,1))) < 0.1
+        M = SDEModel(1.0, 0.0)
+
+        postΠ = calculateposterior(Π, X, M)
+
+        n = 1000
+        y = 0.0:0.01:1.0
+        x = Array{Float64}(length(y),n)
+        for k in 1:n
+            f = rand(postΠ)
+            x[:,k] = f.(y)
+        end
+
+        @test maximum(abs.(mean(x,1))) < 0.1
+
+        M = SDEModel(1.0, 0.0)
+
+        Π = GaussianProcess([fourier(k) for k in 1:40], MvNormal([k^(-1.0) for k in 1:40]))
+
+        postΠ = calculateposterior(Π, X, M)
+
+        n = 1000
+        y = 0.0:0.01:1.0
+        x = Array{Float64}(length(y),n)
+        for k in 1:n
+            f = rand(postΠ)
+            x[:,k] = f.(y)
+        end
+
+        @test maximum(abs.(mean(x,1))) < 0.1
+
+        M = SDEModel(x->1.0, 0.0)
+
+        Π = GaussianProcess([fourier(k) for k in 1:40], MvNormal([k^(-1.0) for k in 1:40]))
+
+        postΠ = calculateposterior(Π, X, M)
+
+        n = 1000
+        y = 0.0:0.01:1.0
+        x = Array{Float64}(length(y),n)
+        for k in 1:n
+            f = rand(postΠ)
+            x[:,k] = f.(y)
+        end
+
+        @test maximum(abs.(mean(x,1))) < 0.1
+        
+        M = SDEModel(x->1.0, 0.0)
+
+        Π = FaberSchauderExpansionWithGaussianCoefficients([2^(α*j) for j in 1:5])
+
+        postΠ = calculateposterior(Π, X, M)
+
+        n = 1000
+        y = 0.0:0.01:1.0
+        x = Array{Float64}(length(y),n)
+        for k in 1:n
+            f = rand(postΠ)
+            x[:,k] = f.(y)
+        end
+
+        @test maximum(abs.(mean(x,1))) < 0.1
     end
 end
